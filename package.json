@@ -1,0 +1,16 @@
+{
+  "name": "viavitalis",
+  "version": "1.0.0",
+  "description": "Via Vitalis — Социален Павилион за Здраве",
+  "scripts": {
+    "test": "playwright test",
+    "test:content": "playwright test tests/content.spec.js",
+    "test:a11y": "playwright test tests/accessibility.spec.js",
+    "lint:html": "htmlhint index.html"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.9.0",
+    "@playwright/test": "^1.44.0",
+    "htmlhint": "^1.1.4"
+  }
+}
