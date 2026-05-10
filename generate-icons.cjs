@@ -50,25 +50,63 @@ function createPNG(width, height, drawFn) {
   return Buffer.concat(chunks);
 }
 
-// Draw BC icon: dark bg + accent square in center
+// Draw stylized "B" letter in accent color on dark background
 function drawIcon(x, y, w, h) {
-  const bg = [10, 10, 15];       // #0A0A0F
-  const accent = [200, 241, 53]; // #C8F135
-  const border = [42, 42, 58];   // #2A2A3A
+  const bg     = [10, 10, 15];       // #0A0A0F
+  const accent = [200, 241, 53];     // #C8F135
+  const dim    = [30, 50, 8];        // darker accent tint for background
 
-  const pad = Math.round(w * 0.15);
-  const r = Math.round(w * 0.18); // corner radius approx
+  // Normalize
+  const nx = x / w;
+  const ny = y / h;
 
-  // Rounded rect accent block in center
-  const bx1 = pad, by1 = pad, bx2 = w - pad, by2 = h - pad;
-  const inBlock = x >= bx1 && x < bx2 && y >= by1 && y < by2;
+  // Subtle radial gradient background (slightly lighter center)
+  const cx = 0.5, cy = 0.5;
+  const dist = Math.sqrt((nx - cx) ** 2 + (ny - cy) ** 2);
+  const bgColor = dist < 0.6
+    ? [14, 14, 22]
+    : bg;
 
-  // Inner dark area for letter-like negative space
-  const ip = Math.round(w * 0.28);
-  const inInner = x >= ip && x < w - ip && y >= ip && y < h - ip;
+  // Rounded square icon border glow
+  const margin = 0.06;
+  const rCorner = 0.22;
+  if (nx < margin || nx > 1 - margin || ny < margin || ny > 1 - margin) return bgColor;
 
-  if (inBlock && !inInner) return accent;
-  return bg;
+  // "B" letter geometry (proportions tuned for legibility at small sizes)
+  const lx = 0.18; // left edge of B
+  const rx = 0.82; // rightmost extent
+  const sw = 0.14; // stroke width
+
+  // Left vertical stem
+  const inStem = nx >= lx && nx <= lx + sw && ny >= 0.12 && ny <= 0.88;
+
+  // Top bar
+  const inTopBar = ny >= 0.12 && ny <= 0.12 + sw && nx >= lx && nx <= 0.68;
+
+  // Middle bar
+  const inMidBar = ny >= 0.48 && ny <= 0.48 + sw * 0.85 && nx >= lx && nx <= 0.62;
+
+  // Bottom bar
+  const inBotBar = ny >= 0.88 - sw && ny <= 0.88 && nx >= lx && nx <= 0.72;
+
+  // Upper bump (right half of top loop) — rounded rectangle approximation
+  const inUpperBump =
+    nx >= 0.60 && nx <= rx - 0.04 &&
+    ny >= 0.12 + sw && ny <= 0.48 &&
+    // Simulate rounded right side with a simple quadrant trim
+    !(nx > rx - 0.14 && (ny < 0.12 + sw + 0.07 || ny > 0.48 - 0.07));
+
+  // Lower bump (slightly wider lower loop)
+  const inLowerBump =
+    nx >= 0.60 && nx <= rx &&
+    ny >= 0.48 + sw * 0.85 && ny <= 0.88 - sw &&
+    !(nx > rx - 0.10 && (ny < 0.48 + sw * 0.85 + 0.07 || ny > 0.88 - sw - 0.07));
+
+  if (inStem || inTopBar || inMidBar || inBotBar || inUpperBump || inLowerBump) {
+    return accent;
+  }
+
+  return bgColor;
 }
 
 fs.mkdirSync('public', { recursive: true });
